@@ -9,8 +9,8 @@ import java.time.OffsetDateTime;
 public class FinalDataPoint {
 	private OffsetDateTime startTime;
 	private OffsetDateTime endTime;
-	private int ElectricityConsumption;
-	private int ElectricityProduction;
-	private int WindPowerproduction;
-	private int ForecastedElectricityPrice;
+	private float electricityConsumption;
+	private float electricityProduction;
+	private float windPowerProduction;
+	private float forecastedElectricityPrice;
 }

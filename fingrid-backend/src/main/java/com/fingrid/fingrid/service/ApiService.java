@@ -1,5 +1,8 @@
 package com.fingrid.fingrid.service;
 
+import com.fingrid.fingrid.response.Datapoint;
+import com.fingrid.fingrid.response.FinalDataPoint;
+import com.fingrid.fingrid.response.FinalResponse;
 import com.fingrid.fingrid.response.FingridResponse;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +28,47 @@ public class ApiService {
 	private String baseUrl;
 	
 	private final WebClient webClient;
+	
+	private final int ELECTRICITY_PRODUCTION_DATASET = 192;
+	private final int ELECTRICITY_CONSUMPTION_DATASET = 193;
+	private final int WIND_POWER_PRODUCTION_DATASET = 181;
+	private final int ENERGY_FORECAST_PRESENTATION = 165;
+	
+	public FinalResponse finalResponse(List<Datapoint> dataPoints){
+		
+		Map<String, FinalDataPoint> timeMap = new HashMap<>();
+		float lastElectricityConsumption = 0;
+		float lastElectricityProduction = 0;
+		float lastWindPowerProduction = 0;
+		float lastForecastedElectricityPrice = 0;
+		
+		for (Datapoint data : dataPoints){
+			String key = data.getStartTime() + " | " + data.getEndTime();
+			
+			FinalDataPoint point = timeMap.getOrDefault(key,new FinalDataPoint());
+			
+			switch (data.getDatasetId()){
+				case ELECTRICITY_PRODUCTION_DATASET:
+					point.setElectricityConsumption(data.getValue());
+					lastElectricityConsumption = data.getValue();
+					break;
+				case ELECTRICITY_CONSUMPTION_DATASET:
+					point.setElectricityProduction(data.getValue());
+					lastElectricityProduction = data.getValue();
+					break;
+				case WIND_POWER_PRODUCTION_DATASET:
+					point.setWindPowerProduction(data.getValue());
+					lastWindPowerProduction = data.getValue();
+					break;
+				case ENERGY_FORECAST_PRESENTATION:
+					point.setForecastedElectricityPrice(data.getValue());
+					lastForecastedElectricityPrice = data.getValue();
+					break;
+				
+			}
+		}
+		return null;
+	}
 	
 	public FingridResponse fetchData() {
 		// Current time in UTC

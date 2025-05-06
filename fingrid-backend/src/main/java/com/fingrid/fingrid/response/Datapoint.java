@@ -17,5 +17,5 @@ public class Datapoint {
 	private String endTime;
 	
 	@JsonProperty("value")
-	private double value;
+	private float value;
 }
