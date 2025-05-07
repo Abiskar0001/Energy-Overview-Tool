@@ -47,18 +47,20 @@ public class ApiService {
 			e.printStackTrace();
 		}
 		FingridForecastResponse forecastResponse = fetchForecast();
+		List<DataPointForecast> dataPoints = forecastResponse.getData();
+		dataPoints.sort(Comparator.comparing(DataPointForecast::getEndTime).reversed());
 		
-		List<DataPointForecast> forecastData = forecastResponse.getData();
-		OffsetDateTime roundedOffsetTime = roundedTime.toOffsetDateTime();
-		Float matchingForecastValue = null;
-		
-		for (DataPointForecast dp : forecastData) {
-			OffsetDateTime dpEndTime = OffsetDateTime.parse(dp.getEndTime(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-			if (dpEndTime.equals(roundedOffsetTime)) {
-				matchingForecastValue = Float.valueOf(dp.getConsumptionForecast());
-				break;
-			}
-		}
+		var sumOfData = dataPoints.stream()
+						.limit(96)
+						.map(DataPointForecast::getConsumptionForecast)
+						.filter(Objects::nonNull)
+						.mapToDouble(value -> {
+							try {
+								return Double.parseDouble(value);
+							} catch (NumberFormatException e) {
+								return 0.0;
+							}})
+						.sum();
 		
 		FinalResponse finalResponse = new FinalResponse();
 		
@@ -86,8 +88,8 @@ public class ApiService {
 			FinalDataPoint latest = finalDataPoints.getFirst();
 			finalResponse.setLatestElectricityConsumption(latest.getElectricityConsumption());
 			finalResponse.setLatestElectricityProduction(latest.getElectricityProduction());
-			finalResponse.setLatestWindPowerproduction(latest.getWindPowerProduction());
-			finalResponse.setEstimatedConsumptionAtTheTime(matchingForecastValue);
+			finalResponse.setLatestWindPowerProduction(latest.getWindPowerProduction());
+			finalResponse.setEstimatedConsumption24Hours((float) sumOfData);
 		}
 		
 		return finalResponse;

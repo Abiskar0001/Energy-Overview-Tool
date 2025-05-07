@@ -77,13 +77,13 @@ const LeftComponent: React.FC<LeftComponentProps> = () => {
     },
     {
       id: 2,
-      label: `Prior Day Forecasted Consumption: ${recentData?.estimatedConsumptionAtTheTime ?? '---'} MW`,
+      label: `Total Forecasted Energy Consumption (Next 24 Hours): ${recentData?.estimatedConsumption24Hours ?? '---'} MWh`,
       icon: ForecastIcon,
     },
 
     {
       id: 3,
-      label: `Wind Power Now: ${recentData?.latestWindPowerproduction ?? '---'} MW`,
+      label: `Wind Power Now: ${recentData?.latestWindPowerProduction ?? '---'} MW`,
       icon: WindPowerIcon,
       lastUpdated: recentData?.data?.[0]?.endTime,
     },

@@ -10,7 +10,7 @@ import java.util.List;
 public class FinalResponse {
 	private Float latestElectricityConsumption;
 	private Float latestElectricityProduction;
-	private Float latestWindPowerproduction;
-	private Float estimatedConsumptionAtTheTime;
+	private Float latestWindPowerProduction;
+	private Float estimatedConsumption24Hours;
 	private List<FinalDataPoint> data;
 }
