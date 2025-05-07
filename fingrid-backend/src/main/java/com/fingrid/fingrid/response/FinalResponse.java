@@ -8,9 +8,9 @@ import java.util.List;
 @Data
 @Component
 public class FinalResponse {
-	private int latestElectricityConsumption;
-	private int latestElectricityProduction;
-	private int latestWindPowerproduction;
-	private int latestForecastedElectricityPrice;
+	private Float latestElectricityConsumption;
+	private Float latestElectricityProduction;
+	private Float latestWindPowerproduction;
+	private Float estimatedConsumptionAtTheTime;
 	private List<FinalDataPoint> data;
 }

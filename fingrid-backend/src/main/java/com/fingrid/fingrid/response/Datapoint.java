@@ -16,6 +16,12 @@ public class Datapoint {
 	@JsonProperty("endTime")
 	private String endTime;
 	
-	@JsonProperty("value")
-	private float value;
+	@JsonProperty("Electricity consumption in Finland - real time data")
+	private float electricityConsumption;
+	
+	@JsonProperty("Electricity production in Finland - real time data")
+	private float electricityProduction;
+	
+	@JsonProperty("Wind power production - real time data")
+	private float windPowerProduction;
 }

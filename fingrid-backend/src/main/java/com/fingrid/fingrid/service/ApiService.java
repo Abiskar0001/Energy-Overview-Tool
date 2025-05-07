@@ -1,25 +1,23 @@
 package com.fingrid.fingrid.service;
 
-import com.fingrid.fingrid.response.Datapoint;
-import com.fingrid.fingrid.response.FinalDataPoint;
-import com.fingrid.fingrid.response.FinalResponse;
-import com.fingrid.fingrid.response.FingridResponse;
+import com.fingrid.fingrid.response.*;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-@AllArgsConstructor
 public class ApiService {
 	@Value("${fingrid.apiKey}")
 	private String apiKey;
@@ -34,67 +32,146 @@ public class ApiService {
 	private final int WIND_POWER_PRODUCTION_DATASET = 181;
 	private final int ENERGY_FORECAST_PRESENTATION = 165;
 	
-	public FinalResponse finalResponse(List<Datapoint> dataPoints){
+	@Cacheable("fingridData")
+	public FinalResponse fetchAndMapData() {
+		ZonedDateTime currentTime = ZonedDateTime.now(ZoneOffset.UTC);
 		
-		Map<String, FinalDataPoint> timeMap = new HashMap<>();
-		float lastElectricityConsumption = 0;
-		float lastElectricityProduction = 0;
-		float lastWindPowerProduction = 0;
-		float lastForecastedElectricityPrice = 0;
+		ZonedDateTime roundedTime = roundToNearestQuarterHour(currentTime);
 		
-		for (Datapoint data : dataPoints){
-			String key = data.getStartTime() + " | " + data.getEndTime();
-			
-			FinalDataPoint point = timeMap.getOrDefault(key,new FinalDataPoint());
-			
-			switch (data.getDatasetId()){
-				case ELECTRICITY_PRODUCTION_DATASET:
-					point.setElectricityConsumption(data.getValue());
-					lastElectricityConsumption = data.getValue();
-					break;
-				case ELECTRICITY_CONSUMPTION_DATASET:
-					point.setElectricityProduction(data.getValue());
-					lastElectricityProduction = data.getValue();
-					break;
-				case WIND_POWER_PRODUCTION_DATASET:
-					point.setWindPowerProduction(data.getValue());
-					lastWindPowerProduction = data.getValue();
-					break;
-				case ENERGY_FORECAST_PRESENTATION:
-					point.setForecastedElectricityPrice(data.getValue());
-					lastForecastedElectricityPrice = data.getValue();
-					break;
-				
+		FingridResponse response = fetchDataElectricity();
+		try {
+			Thread.sleep(1800);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			e.printStackTrace();
+		}
+		FingridForecastResponse forecastResponse = fetchForecast();
+		
+		List<DataPointForecast> forecastData = forecastResponse.getData();
+		OffsetDateTime roundedOffsetTime = roundedTime.toOffsetDateTime();
+		Float matchingForecastValue = null;
+		
+		for (DataPointForecast dp : forecastData) {
+			OffsetDateTime dpEndTime = OffsetDateTime.parse(dp.getEndTime(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+			if (dpEndTime.equals(roundedOffsetTime)) {
+				matchingForecastValue = Float.valueOf(dp.getConsumptionForecast());
+				break;
 			}
 		}
-		return null;
+		
+		FinalResponse finalResponse = new FinalResponse();
+		
+		List<FinalDataPoint> finalDataPoints = new ArrayList<>();
+		
+		for (Datapoint datapoint : response.getData()) {
+			FinalDataPoint finalDataPoint = new FinalDataPoint();
+			
+			OffsetDateTime startTime = OffsetDateTime.parse(datapoint.getStartTime(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+			OffsetDateTime endTime = OffsetDateTime.parse(datapoint.getEndTime(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+			
+			finalDataPoint.setStartTime(startTime);
+			finalDataPoint.setEndTime(endTime);
+			
+			finalDataPoint.setElectricityConsumption(datapoint.getElectricityConsumption());
+			finalDataPoint.setElectricityProduction(datapoint.getElectricityProduction());
+			finalDataPoint.setWindPowerProduction(datapoint.getWindPowerProduction());
+			
+			finalDataPoints.add(finalDataPoint);
+		}
+		finalDataPoints.sort(Comparator.comparing(FinalDataPoint::getEndTime).reversed());
+		finalResponse.setData(finalDataPoints);
+		
+		if (!finalDataPoints.isEmpty()) {
+			FinalDataPoint latest = finalDataPoints.getFirst();
+			finalResponse.setLatestElectricityConsumption(latest.getElectricityConsumption());
+			finalResponse.setLatestElectricityProduction(latest.getElectricityProduction());
+			finalResponse.setLatestWindPowerproduction(latest.getWindPowerProduction());
+			finalResponse.setEstimatedConsumptionAtTheTime(matchingForecastValue);
+		}
+		
+		return finalResponse;
 	}
 	
-	public FingridResponse fetchData() {
-		// Current time in UTC
-		ZonedDateTime endTimeZdt = ZonedDateTime.now(ZoneOffset.UTC);
-		ZonedDateTime startTimeZdt = endTimeZdt.minusHours(24);
+	public FingridResponse fetchDataElectricity() {
+		ZoneId finnishZone = ZoneId.of("Europe/Helsinki");
+		ZonedDateTime endTimeZdt = ZonedDateTime.now(finnishZone);
+		String endTime = endTimeZdt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
 		
-		// Format to ISO 8601 with milliseconds and 'Z' for UTC
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-		String endTime = endTimeZdt.format(formatter);
-		String startTime = startTimeZdt.format(formatter);
+		ZonedDateTime startTimeZdt = endTimeZdt.minusDays(1);
+		String startTime = startTimeZdt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+		
+		String datasets = "192,193,181";
+		String pageSize = "3000";
+		String locale = "en";
+		
+		String uri = UriComponentsBuilder.fromHttpUrl("https://data.fingrid.fi/api/data")
+						.queryParam("datasets", datasets)
+						.queryParam("startTime", startTime)
+						.queryParam("endTime", endTime)
+						.queryParam("format", "json")
+						.queryParam("pageSize", pageSize)
+						.queryParam("locale", locale)
+						.queryParam("sortBy", "endTime")
+						.queryParam("sortOrder", "desc")
+						.queryParam("oneRowPerTimePeriod","true")
+						.toUriString();
 		
 		return webClient.get()
-						.uri(uriBuilder -> uriBuilder
-										.path("/api/data")
-										.queryParam("datasets", "165,192,193,181")
-										.queryParam("startTime", startTime)
-										.queryParam("endTime", endTime)
-										.queryParam("format", "json")
-										.queryParam("pageSize", 3000)
-										.queryParam("locale", "en")
-										.queryParam("sortBy", "endTime")
-										.queryParam("sortOrder", "desc")
-										.build())
+						.uri(uri)
 						.header("x-api-key", apiKey)
 						.retrieve()
 						.bodyToMono(FingridResponse.class)
 						.block();
+	}
+	
+	public FingridForecastResponse fetchForecast(){
+		OffsetDateTime oneDayAgo = OffsetDateTime.now(ZoneId.of("Europe/Helsinki")).minusDays(1);
+		String startTime = oneDayAgo.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
+		
+		String datasets = "165";
+		String pageSize = "3000";
+		String locale = "en";
+		
+		String uri = UriComponentsBuilder.fromHttpUrl("https://data.fingrid.fi/api/data")
+						.queryParam("datasets", datasets)
+						.queryParam("startTime", startTime)
+						.queryParam("format", "json")
+						.queryParam("pageSize", pageSize)
+						.queryParam("locale", locale)
+						.queryParam("sortBy", "endTime")
+						.queryParam("sortOrder", "desc")
+						.queryParam("oneRowPerTimePeriod","true")
+						.toUriString();
+		
+		return webClient.get()
+						.uri(uri)
+						.header("x-api-key", apiKey)
+						.retrieve()
+						.bodyToMono(FingridForecastResponse.class)
+						.block();
+	}
+	
+	public static ZonedDateTime roundToNearestQuarterHour(ZonedDateTime dt) {
+		int minute = dt.getMinute();
+		int second = dt.getSecond();
+		int nano   = dt.getNano();
+		
+		int totalSeconds = minute * 60 + second;
+		int quarterSec   = 15 * 60;
+		
+		int roundedSeconds = Math.toIntExact(
+						Math.round(totalSeconds / (double)quarterSec) * quarterSec
+		);
+		
+		int newMinute = (roundedSeconds / 60) % 60;
+		int newHourCarry = (roundedSeconds / 3600);
+		
+		ZonedDateTime rounded = dt
+						.withSecond(0)
+						.withNano(0)
+						.plusHours(newHourCarry)
+						.withMinute(newMinute);
+		
+		return rounded;
 	}
 }
