@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Snackbar, Button } from '@mui/material';
 import axios from 'axios';
 import ElectricityIcon from '../assets/electricity.svg';
 import ElectricityHome from '../assets/electricity-home.svg';
@@ -9,25 +10,62 @@ interface LeftComponentProps {}
 
 const LeftComponent: React.FC<LeftComponentProps> = () => {
   const [recentData, setRecentData] = useState<any>(null);
-  const [data, setData] = useState({
-    consumption: null,
-    production: null,
-    wind: null,
-    forecast: null,
-  });
+
+  const [fetchTime, setFetchTime] = useState<string>(() =>
+    new Date().toLocaleString('en-US', { timeZone: 'Europe/Helsinki' })
+  );
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const showSnackbar = (msg: string) => {
+    setMessage(msg);
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   const fetchData = async () => {
     try {
+      setFetchTime('Fetching data...');
+      showSnackbar('Fetching data...');
       const response = await axios.get('http://localhost:1010/api/final');
       setRecentData(response.data);
-      console.log('Fetched data:', response.data);
+      setFetchTime(
+        new Date().toLocaleString('en-US', { timeZone: 'Europe/Helsinki' })
+      );
     } catch (error) {
-      console.error('Error fetching data:', error);
+      showSnackbar('Error fetching data. Please try again later.');
+    }
+  };
+
+  const handleItemClick = (itemId: number) => {
+    switch (itemId) {
+      case 1:
+        console.log('Electricity Consumption clicked');
+        break;
+      case 2:
+        console.log('Forecast clicked');
+        break;
+      case 3:
+        console.log('Wind Power clicked');
+        break;
+      case 4:
+        console.log('Electricity Production clicked');
+        break;
+      default:
+        break;
     }
   };
 
   useEffect(() => {
     fetchData();
+    const intervalApiCaller = setInterval(() => {
+        fetchData(); 
+      }, 60000);
+
+      return () => clearInterval(intervalApiCaller);
   }, []);
 
   const items = [
@@ -59,12 +97,20 @@ const LeftComponent: React.FC<LeftComponentProps> = () => {
 
   return (
     <div className="left-component p-6 bg-gray-100 h-full w-4/10">
+      <Snackbar
+        open={open}
+        autoHideDuration={3000}
+        onClose={handleClose}
+        message={message}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
       <h1 className="text-xl font-bold text-center mb-4 text-gray-800">
         Click on the items to see more details
       </h1>
       {items.map((item) => (
         <div
           key={item.id}
+          onClick={() => handleItemClick(item.id)}
           className="item flex items-center p-6 mb-6 bg-white rounded-2xl shadow hover:bg-gray-100 transition"
         >
           {/* Icon */}
@@ -85,13 +131,15 @@ const LeftComponent: React.FC<LeftComponentProps> = () => {
           </div>
         </div>
       ))}
-
-      <button
-        className="refresh-button mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-        onClick={fetchData}
-      >
-        Refresh
-      </button>
+      <div className="text-gray-500">
+        <button
+          className="refresh-button mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          onClick={fetchData}
+        >
+          Refresh
+        </button>
+        <a className="p-2">Last fetched: {fetchTime}</a>
+      </div>
     </div>
   );
 };

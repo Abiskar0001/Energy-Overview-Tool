@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.OffsetDateTime;
@@ -40,7 +41,7 @@ public class ApiService {
 		
 		FingridResponse response = fetchDataElectricity();
 		try {
-			Thread.sleep(1800);
+			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			e.printStackTrace();
@@ -92,7 +93,7 @@ public class ApiService {
 		return finalResponse;
 	}
 	
-	public FingridResponse fetchDataElectricity() {
+	public FingridResponse fetchDataElectricity() throws WebClientResponseException {
 		ZoneId finnishZone = ZoneId.of("Europe/Helsinki");
 		ZonedDateTime endTimeZdt = ZonedDateTime.now(finnishZone);
 		String endTime = endTimeZdt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
@@ -116,12 +117,33 @@ public class ApiService {
 						.queryParam("oneRowPerTimePeriod","true")
 						.toUriString();
 		
-		return webClient.get()
-						.uri(uri)
-						.header("x-api-key", apiKey)
-						.retrieve()
-						.bodyToMono(FingridResponse.class)
-						.block();
+		try {
+			return webClient.get()
+							.uri(uri)
+							.header("x-api-key", apiKey)
+							.retrieve()
+							.bodyToMono(FingridResponse.class)
+							.block();
+		} catch (WebClientResponseException e) {
+			if (e.getStatusCode().value() == 429) {
+				try {
+					Thread.sleep(2000);
+					return webClient.get()
+									.uri(uri)
+									.header("x-api-key", apiKey)
+									.retrieve()
+									.bodyToMono(FingridResponse.class)
+									.block();
+				} catch (InterruptedException interruptedException) {
+					Thread.currentThread().interrupt();
+					throw new RuntimeException("Retry interrupted", interruptedException);
+				} catch (WebClientResponseException retryException) {
+					// If the retry also fails, throw the exception
+					throw new RuntimeException("Retry failed: " + retryException.getMessage(), retryException);
+				}
+			}
+			throw e;  // Re-throw the exception if it's not a 429
+		}
 	}
 	
 	public FingridForecastResponse fetchForecast(){
@@ -143,12 +165,35 @@ public class ApiService {
 						.queryParam("oneRowPerTimePeriod","true")
 						.toUriString();
 		
-		return webClient.get()
-						.uri(uri)
-						.header("x-api-key", apiKey)
-						.retrieve()
-						.bodyToMono(FingridForecastResponse.class)
-						.block();
+		try {
+			return webClient.get()
+							.uri(uri)
+							.header("x-api-key", apiKey)
+							.retrieve()
+							.bodyToMono(FingridForecastResponse.class)
+							.block();
+		} catch (WebClientResponseException e) {
+			if (e.getStatusCode().value() == 429) {
+				// Handle 429 error: Implement a backoff/retry strategy
+				System.out.println("Rate limit exceeded: " + e.getMessage());
+				try {
+					Thread.sleep(2000);
+					return webClient.get()
+									.uri(uri)
+									.header("x-api-key", apiKey)
+									.retrieve()
+									.bodyToMono(FingridForecastResponse.class)
+									.block();
+				} catch (InterruptedException interruptedException) {
+					Thread.currentThread().interrupt();
+					throw new RuntimeException("Retry interrupted", interruptedException);
+				} catch (WebClientResponseException retryException) {
+					// If the retry also fails, throw the exception
+					throw new RuntimeException("Retry failed: " + retryException.getMessage(), retryException);
+				}
+			}
+			throw e;  // Re-throw the exception if it's not a 429
+		}
 	}
 	
 	public static ZonedDateTime roundToNearestQuarterHour(ZonedDateTime dt) {
