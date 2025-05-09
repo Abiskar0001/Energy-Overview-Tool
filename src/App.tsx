@@ -1,7 +1,6 @@
 import Header from './components/Header'
-import LeftComponent from './components/LeftComponent'
 import './App.css'
-import ParentComponent from './components/ParentComponent'
+import ParentComponent from './components/ParentComponent.tsx'
 
 function App() {
 
@@ -9,7 +8,7 @@ function App() {
     <>
     <Header />
     <div className="flex h-screen">
-    <LeftComponent />
+    <ParentComponent />
     </div>
     </>
   )

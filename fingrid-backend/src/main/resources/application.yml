@@ -4,6 +4,7 @@ spring:
   application:
     name: fingrid
 fingrid:
-  apiKey: 24af935c8a3b4a08a425c4404f3e4897
+  apiKey: 
   baseUrl: https://data.fingrid.fi
+
 
