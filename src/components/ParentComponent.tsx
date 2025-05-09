@@ -11,7 +11,9 @@ const ParentComponent = () => {
   );
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
-  const [selectedDataVariable, setSelectedDataVariable] = useState<keyof DataPoint>('electricityConsumption'); // Default selection
+  const [selectedDataVariable, setSelectedDataVariable] = useState<
+    keyof DataPoint
+  >('electricityConsumption'); // Default selection
 
   const showSnackbar = (msg: string) => {
     setMessage(msg);
@@ -47,7 +49,7 @@ const ParentComponent = () => {
   };
 
   const handleItemClick = (dataPointName: keyof DataPoint) => {
-      setSelectedDataVariable(dataPointName);
+    setSelectedDataVariable(dataPointName);
   };
 
   return (
@@ -64,11 +66,11 @@ const ParentComponent = () => {
           recentData={recentData}
           fetchTime={fetchTime}
           onRefresh={fetchData}
-          onItemClick={handleItemClick} // Pass the click handler to LeftComponent
+          onItemClick={handleItemClick}
         />
         <RightComponent
           recentData={recentData}
-          dataVariable={selectedDataVariable} // Pass the selected data variable to RightComponent
+          dataVariable={selectedDataVariable} 
         />
       </div>
     </>

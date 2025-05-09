@@ -40,14 +40,16 @@ const RightComponent: React.FC<RightComponentProps> = ({
   recentData,
   dataVariable,
 }) => {
-  const chartWidth = recentData.data.length * 5;
+  const minYValue = Math.min(
+    ...recentData.data.map((d) => Number(d[dataVariable]))
+  );
+  const maxYValue = Math.max(
+    ...recentData.data.map((d) => Number(d[dataVariable]))
+  );
 
-  const minYValue = Math.min(...recentData.data.map(d => Number(d[dataVariable])));
-const maxYValue = Math.max(...recentData.data.map(d => Number(d[dataVariable])));
-
-const buffer = (maxYValue - minYValue) * 0.1;  // 10% buffer
-const adjustedMinYValue = minYValue - buffer;
-const adjustedMaxYValue = maxYValue + buffer;
+  const buffer = (maxYValue - minYValue) * 0.1; 
+  const adjustedMinYValue = minYValue - buffer;
+  const adjustedMaxYValue = maxYValue + buffer;
 
   return (
     <div className="right-component p-6 bg-gray-100 h-full w-6/10 overflow-auto border">
@@ -71,7 +73,7 @@ const adjustedMaxYValue = maxYValue + buffer;
               }
               ticks={recentData.data
                 .map((d) => d.endTime)
-                .filter((t) => new Date(t).getMinutes() === 0)} 
+                .filter((t) => new Date(t).getMinutes() === 0)}
               label={{ value: 'Time', position: 'bottom', offset: 0 }}
             />
             <YAxis
@@ -83,7 +85,7 @@ const adjustedMaxYValue = maxYValue + buffer;
                 const min = Math.floor(minYValue / 10) * 10;
                 const max = Math.ceil(maxYValue / 10) * 10;
                 const range = max - min;
-                const step = Math.max(10, Math.ceil(range / 7 / 10) * 10); 
+                const step = Math.max(10, Math.ceil(range / 7 / 10) * 10);
                 const ticks = [];
                 for (let val = min; val <= max; val += step) {
                   ticks.push(val);
@@ -108,7 +110,7 @@ const adjustedMaxYValue = maxYValue + buffer;
               type="monotone"
               dataKey={dataVariable}
               stroke="#8884d8"
-              name="Consumption MW"
+              name="Value"
               dot={false}
             />
           </LineChart>

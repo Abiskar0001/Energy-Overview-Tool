@@ -9,7 +9,7 @@ interface LeftComponentProps {
   recentData: any;
   fetchTime: string;
   onRefresh: () => void;
-  onItemClick: (dataPointName: keyof DataPoint) => void; // Add the onItemClick prop
+  onItemClick: (dataPointName: keyof DataPoint) => void;
 }
 
 const LeftComponent: React.FC<LeftComponentProps> = ({
@@ -19,39 +19,39 @@ const LeftComponent: React.FC<LeftComponentProps> = ({
   onItemClick,
 }) => {
   const items: {
-      id: number;
-      label: string;
-      icon: string;
-      dataPointName: keyof DataPoint | '';
-      lastUpdated?: string;
+    id: number;
+    label: string;
+    icon: string;
+    dataPointName: keyof DataPoint | '';
+    lastUpdated?: string;
   }[] = [
-      {
-          id: 1,
-          label: `Electricity Consumption Now: ${recentData?.latestElectricityConsumption ?? '---'} MW`,
-          icon: ElectricityHome,
-          dataPointName: 'electricityConsumption',
-          lastUpdated: recentData?.data?.[0]?.endTime
-      },
-      {
-          id: 2,
-          label: `Total Forecasted Energy Consumption (Next 24 Hours): ${recentData?.estimatedConsumption24Hours ?? '---'} MWh`,
-          icon: ForecastIcon,
-          dataPointName: '',
-      },
-      {
-          id: 3,
-          label: `Wind Power Now: ${recentData?.latestWindPowerProduction ?? '---'} MW`,
-          icon: WindPowerIcon,
-          dataPointName: 'windPowerProduction',
-          lastUpdated: recentData?.data?.[0]?.endTime
-      },
-      {
-          id: 4,
-          label: `Electricity Production Now: ${recentData?.latestElectricityProduction ?? '---'} MW`,
-          icon: ElectricityIcon,
-          dataPointName: 'electricityProduction',
-          lastUpdated: recentData?.data?.[0]?.endTime
-      },
+    {
+      id: 1,
+      label: `Electricity Consumption Now: ${recentData?.latestElectricityConsumption ?? '---'} MW`,
+      icon: ElectricityHome,
+      dataPointName: 'electricityConsumption',
+      lastUpdated: recentData?.data?.[0]?.endTime,
+    },
+    {
+      id: 2,
+      label: `Total Forecasted Energy Consumption (Next 24 Hours): ${recentData?.estimatedConsumption24Hours ?? '---'} MWh`,
+      icon: ForecastIcon,
+      dataPointName: '',
+    },
+    {
+      id: 3,
+      label: `Wind Power Now: ${recentData?.latestWindPowerProduction ?? '---'} MW`,
+      icon: WindPowerIcon,
+      dataPointName: 'windPowerProduction',
+      lastUpdated: recentData?.data?.[0]?.endTime,
+    },
+    {
+      id: 4,
+      label: `Electricity Production Now: ${recentData?.latestElectricityProduction ?? '---'} MW`,
+      icon: ElectricityIcon,
+      dataPointName: 'electricityProduction',
+      lastUpdated: recentData?.data?.[0]?.endTime,
+    },
   ];
 
   return (
