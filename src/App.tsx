@@ -6,8 +6,8 @@ function App() {
 
   return (
     <>
+    <div className="flex flex-col h-screen">
     <Header />
-    <div className="flex h-screen">
     <ParentComponent />
     </div>
     </>

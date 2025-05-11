@@ -13,7 +13,9 @@ const ParentComponent = () => {
   const [message, setMessage] = useState('');
   const [selectedDataVariable, setSelectedDataVariable] = useState<
     keyof DataPoint
-  >('electricityConsumption'); // Default selection
+  >('electricityConsumption');
+  const [selectedDataVariablePointerName, setSelectedDataVariablePointerName] =
+    useState<string>('Electricity Consumption');
 
   const showSnackbar = (msg: string) => {
     setMessage(msg);
@@ -48,12 +50,13 @@ const ParentComponent = () => {
     }
   };
 
-  const handleItemClick = (dataPointName: keyof DataPoint) => {
+  const handleItemClick = (dataPointName: keyof DataPoint,dataPointPointerName:string) => {
     setSelectedDataVariable(dataPointName);
+    setSelectedDataVariablePointerName(dataPointPointerName);
   };
 
   return (
-    <>
+    <div className="flex flex-col h-screen">
       <Snackbar
         open={open}
         autoHideDuration={3000}
@@ -66,14 +69,17 @@ const ParentComponent = () => {
           recentData={recentData}
           fetchTime={fetchTime}
           onRefresh={fetchData}
-          onItemClick={handleItemClick}
+          onItemClick={({ dataPointName, dataPointPointerName }) =>
+            handleItemClick(dataPointName, dataPointPointerName || '')
+          }
         />
         <RightComponent
           recentData={recentData}
-          dataVariable={selectedDataVariable} 
+          dataVariable={selectedDataVariable}
+          dataVariablePointerName={selectedDataVariablePointerName}
         />
       </div>
-    </>
+    </div>
   );
 };
 
