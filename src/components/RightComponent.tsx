@@ -8,7 +8,8 @@ import {
   YAxis,
   Tooltip,
 } from 'recharts';
-import LineChartComponent from './LineChartComponent';
+import LineChartComponent from './analytics/LineChartComponent';
+import { DataPoint } from './ParentComponent';
 
 interface RightComponentProps {
   recentData: {
@@ -20,14 +21,6 @@ interface RightComponentProps {
       windPowerProduction: number;
     }[];
   };
-}
-
-export interface DataPoint {
-  startTime: string;
-  endTime: string;
-  electricityConsumption: number;
-  electricityProduction: number;
-  windPowerProduction: number;
 }
 
 interface RightComponentProps {

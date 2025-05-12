@@ -3,7 +3,7 @@ import ElectricityIcon from '../assets/electricity.svg';
 import ElectricityHome from '../assets/electricity-home.svg';
 import WindPowerIcon from '../assets/electricity-wind.svg';
 import ForecastIcon from '../assets/forecast.svg';
-import { DataPoint } from './RightComponent';
+import { DataPoint } from './ParentComponent';
 
 interface LeftComponentProps {
   recentData: any;

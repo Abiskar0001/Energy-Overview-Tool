@@ -1,11 +1,5 @@
 import { ResponsiveContainer, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Line } from 'recharts';
-export interface DataPoint {
-    startTime: string;
-    endTime: string;
-    electricityConsumption: number;
-    electricityProduction: number;
-    windPowerProduction: number;
-  }
+import { DataPoint } from '../ParentComponent';
   
   interface LineChartComponentProps {
     recentData: {

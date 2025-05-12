@@ -2,7 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Snackbar, Button } from '@mui/material';
 import axios from 'axios';
 import LeftComponent from './LeftComponent';
-import RightComponent, { DataPoint } from './RightComponent';
+import RightComponent from './RightComponent';
+
+export interface DataPoint {
+  startTime: string;
+  endTime: string;
+  electricityConsumption: number;
+  electricityProduction: number;
+  windPowerProduction: number;
+}
 
 const ParentComponent = () => {
   const [recentData, setRecentData] = useState<{ data: any[] }>({ data: [] });

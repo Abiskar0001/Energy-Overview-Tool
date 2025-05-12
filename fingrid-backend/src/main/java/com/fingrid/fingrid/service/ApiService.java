@@ -94,7 +94,7 @@ public class ApiService {
 		
 		return finalResponse;
 	}
-	
+	@Cacheable
 	public FingridResponse fetchDataElectricity() throws WebClientResponseException {
 		ZoneId finnishZone = ZoneId.of("Europe/Helsinki");
 		ZonedDateTime endTimeZdt = ZonedDateTime.now(finnishZone);
@@ -144,10 +144,10 @@ public class ApiService {
 					throw new RuntimeException("Retry failed: " + retryException.getMessage(), retryException);
 				}
 			}
-			throw e;  // Re-throw the exception if it's not a 429
+			throw e;
 		}
 	}
-	
+	@Cacheable
 	public FingridForecastResponse fetchForecast(){
 		OffsetDateTime oneDayAgo = OffsetDateTime.now(ZoneId.of("Europe/Helsinki")).minusDays(1);
 		String startTime = oneDayAgo.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
