@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import LineChartComponent from './analytics/LineChartComponent';
 import { DataPoint } from './ParentComponent';
+import HighLowComponent from './analytics/HighLowCurrentComponent';
 
 interface RightComponentProps {
   recentData: {
@@ -37,12 +38,16 @@ const RightComponent: React.FC<RightComponentProps> = ({
   dataVariablePointerName,
 }) => {
   return (
-    <div className='right-component p-6 bg-gray-100 h-screen flex flex-col w-6/10 overflow-auto border'>
+    <div className='right-component bg-gray-100 p-6 min-h-screen w-3/5 overflow-auto flex flex-col border-l border-gray-300'>
       <h1 className='text-4xl font-bold font-mono text-center'>{dataVariablePointerName} Analytics</h1>
       <LineChartComponent
         recentData={recentData}
         dataVariable={dataVariable}
         dataVariablePointerName={dataVariablePointerName}
+      />
+      <HighLowComponent
+        recentData={recentData}
+        dataVariable={dataVariable}
       />
     </div>
   );

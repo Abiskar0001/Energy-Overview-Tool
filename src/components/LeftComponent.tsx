@@ -62,7 +62,7 @@ const LeftComponent: React.FC<LeftComponentProps> = ({
   ];
 
   return (
-    <div className="left-component p-6 bg-gray-100 h-full w-4/10">
+    <div className="left-component p-6 bg-gray-100 min-h-screen w-2/5 overflow-auto flex flex-col border-r border-gray-300">
       <h1 className="text-3xl font-mono font-bold text-center mb-4 text-gray-800">
         Click on the items to see more details
       </h1>

@@ -4,6 +4,7 @@ import axios from 'axios';
 import LeftComponent from './LeftComponent';
 import RightComponent from './RightComponent';
 
+
 export interface DataPoint {
   startTime: string;
   endTime: string;

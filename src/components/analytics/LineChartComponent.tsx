@@ -21,7 +21,7 @@ const LineChartComponent:React.FC<LineChartComponentProps> = ({recentData,dataVa
       const adjustedMinYValue = minYValue - buffer;
       const adjustedMaxYValue = maxYValue + buffer;
     return (
-          <div className="h-7/10 w-full mt-4">
+          <div className="h-4/5 w-full mt-4">
             <ResponsiveContainer>
               <LineChart
                 data={[...recentData.data].reverse()}
