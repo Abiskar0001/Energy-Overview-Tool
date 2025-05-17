@@ -12,5 +12,8 @@ public class FinalResponse {
 	private Float latestElectricityProduction;
 	private Float latestWindPowerProduction;
 	private Float estimatedConsumption24Hours;
+	private Float latestHydroProduction;
+	private Float latestNuclearPowerProduction;
+	private Float latestIndustrialGeneration;
 	private List<FinalDataPoint> data;
 }

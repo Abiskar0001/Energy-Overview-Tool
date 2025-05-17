@@ -4,13 +4,15 @@ import axios from 'axios';
 import LeftComponent from './LeftComponent';
 import RightComponent from './RightComponent';
 
-
 export interface DataPoint {
   startTime: string;
   endTime: string;
   electricityConsumption: number;
   electricityProduction: number;
   windPowerProduction: number;
+  nuclearPowerProduction: number;
+  hydroProduction: number;
+  industrialCogeneration: number;
 }
 
 const ParentComponent = () => {
@@ -21,10 +23,10 @@ const ParentComponent = () => {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [selectedDataVariable, setSelectedDataVariable] = useState<
-    keyof DataPoint
-  >('electricityConsumption');
+    keyof DataPoint | 'allProduction'
+  >('allProduction');
   const [selectedDataVariablePointerName, setSelectedDataVariablePointerName] =
-    useState<string>('Electricity Consumption');
+    useState<string>('Combined Production');
 
   const showSnackbar = (msg: string) => {
     setMessage(msg);
@@ -59,10 +61,44 @@ const ParentComponent = () => {
     }
   };
 
-  const handleItemClick = (dataPointName: keyof DataPoint,dataPointPointerName:string) => {
+  const handleItemClick = (
+    dataPointName: keyof DataPoint,
+    dataPointPointerName: string
+  ) => {
     setSelectedDataVariable(dataPointName);
     setSelectedDataVariablePointerName(dataPointPointerName);
   };
+
+  const productionVariables = [
+    {
+      key: 'windPowerProduction' as keyof DataPoint,
+      label: 'Wind Power Production',
+      color: '#82ca9d',
+    },
+    {
+      key: 'hydroProduction' as keyof DataPoint,
+      label: 'Hydro Power Production',
+      color: '#3498db',
+    },
+    {
+      key: 'nuclearPowerProduction' as keyof DataPoint,
+      label: 'Nuclear Power Production',
+      color: '#f39c12',
+    },
+    {
+      key: 'industrialCogeneration' as keyof DataPoint,
+      label: 'Industrial Cogeneration',
+      color: '#27ae60',
+    },
+  ];
+
+  const multipleVariables =
+    selectedDataVariable === 'allProduction' ? productionVariables : undefined;
+
+    const handleReturnToHome = () => {
+      console.log('Returning to home');
+      setSelectedDataVariable('allProduction');
+      setSelectedDataVariablePointerName('Combined Production');}
 
   return (
     <div className="flex flex-col h-screen">
@@ -83,9 +119,19 @@ const ParentComponent = () => {
           }
         />
         <RightComponent
+          onReturnToHome={handleReturnToHome}
           recentData={recentData}
-          dataVariable={selectedDataVariable}
+          dataVariable={
+            selectedDataVariable === 'allProduction'
+              ? 'electricityProduction'
+              : selectedDataVariable
+          }
           dataVariablePointerName={selectedDataVariablePointerName}
+          multipleVariables={
+            selectedDataVariable === 'allProduction'
+              ? productionVariables
+              : undefined
+          }
         />
       </div>
     </div>

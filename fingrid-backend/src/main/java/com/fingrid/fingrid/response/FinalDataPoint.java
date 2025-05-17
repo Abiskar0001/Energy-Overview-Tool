@@ -12,4 +12,7 @@ public class FinalDataPoint {
 	private Float electricityConsumption;
 	private Float electricityProduction;
 	private Float windPowerProduction;
+	private Float nuclearPowerProduction;
+	private Float industrialCogeneration;
+	private Float hydroProduction;
 }

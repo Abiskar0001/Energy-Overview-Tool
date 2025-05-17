@@ -24,4 +24,12 @@ public class Datapoint {
 	
 	@JsonProperty("Wind power production - real time data")
 	private float windPowerProduction;
+	@JsonProperty("Nuclear power production - real time data")
+	private Float nuclearPowerProduction;
+	
+	@JsonProperty("Industrial cogeneration - real time data")
+	private Float industrialCogeneration;
+	
+	@JsonProperty("Hydro power production - real time data")
+	private Float hydroProduction;
 }

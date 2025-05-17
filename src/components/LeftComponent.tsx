@@ -3,6 +3,9 @@ import ElectricityIcon from '../assets/electricity.svg';
 import ElectricityHome from '../assets/electricity-home.svg';
 import WindPowerIcon from '../assets/electricity-wind.svg';
 import ForecastIcon from '../assets/forecast.svg';
+import NuclearIcon from '../assets/nuclear.svg';
+import HydroIcon from '../assets/hydropower.svg';
+import IndustrialIcon from '../assets/industry.svg';
 import { DataPoint } from './ParentComponent';
 
 interface LeftComponentProps {
@@ -58,6 +61,30 @@ const LeftComponent: React.FC<LeftComponentProps> = ({
       dataPointName: 'electricityProduction',
       lastUpdated: recentData?.data?.[0]?.endTime,
       dataPointPointerName: 'Electricity Production',
+    },
+    {
+      id: 5,
+      label: `Hydro Power Now: ${recentData?.latestHydroProduction ?? '---'} MW`,
+      icon: HydroIcon,
+      dataPointName: 'hydroProduction',
+      lastUpdated: recentData?.data?.[0]?.endTime,
+      dataPointPointerName: 'Hydro Power Production',
+    },
+    {
+      id: 6,
+      label: `Nuclear Power Now: ${recentData?.latestNuclearPowerProduction ?? '---'} MW`,
+      icon: NuclearIcon,
+      dataPointName: 'nuclearPowerProduction',
+      lastUpdated: recentData?.data?.[0]?.endTime,
+      dataPointPointerName: 'Nuclear Power Production',
+    },
+    {
+      id: 7,
+      label: `Industrial Cogeneration: ${recentData?.latestIndustrialGeneration ?? '---'} MW`,
+      icon: IndustrialIcon,
+      dataPointName: 'industrialCogeneration',
+      lastUpdated: recentData?.data?.[0]?.endTime,
+      dataPointPointerName: 'Industrial Cogeneration',
     },
   ];
 

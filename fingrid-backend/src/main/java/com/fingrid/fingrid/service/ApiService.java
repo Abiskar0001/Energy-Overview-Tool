@@ -35,9 +35,9 @@ public class ApiService {
 	
 	@Cacheable("fingridData")
 	public FinalResponse fetchAndMapData() {
-		ZonedDateTime currentTime = ZonedDateTime.now(ZoneOffset.UTC);
+		//ZonedDateTime currentTime = ZonedDateTime.now(ZoneOffset.UTC);
 		
-		ZonedDateTime roundedTime = roundToNearestQuarterHour(currentTime);
+		//ZonedDateTime roundedTime = roundToNearestQuarterHour(currentTime);
 		
 		FingridResponse response = fetchDataElectricity();
 		try {
@@ -78,7 +78,10 @@ public class ApiService {
 			finalDataPoint.setElectricityConsumption(datapoint.getElectricityConsumption());
 			finalDataPoint.setElectricityProduction(datapoint.getElectricityProduction());
 			finalDataPoint.setWindPowerProduction(datapoint.getWindPowerProduction());
-			
+      finalDataPoint.setHydroProduction(datapoint.getHydroProduction());
+      finalDataPoint.setNuclearPowerProduction(datapoint.getNuclearPowerProduction());
+      finalDataPoint.setIndustrialCogeneration(datapoint.getIndustrialCogeneration());
+
 			finalDataPoints.add(finalDataPoint);
 		}
 		finalDataPoints.sort(Comparator.comparing(FinalDataPoint::getEndTime).reversed());
@@ -89,6 +92,9 @@ public class ApiService {
 			finalResponse.setLatestElectricityConsumption(latest.getElectricityConsumption());
 			finalResponse.setLatestElectricityProduction(latest.getElectricityProduction());
 			finalResponse.setLatestWindPowerProduction(latest.getWindPowerProduction());
+      finalResponse.setLatestHydroProduction(latest.getHydroProduction());
+      finalResponse.setLatestIndustrialGeneration(latest.getIndustrialCogeneration());
+      finalResponse.setLatestNuclearPowerProduction(latest.getNuclearPowerProduction());
 			finalResponse.setEstimatedConsumption24Hours((float) sumOfData);
 		}
 		
@@ -103,7 +109,7 @@ public class ApiService {
 		ZonedDateTime startTimeZdt = endTimeZdt.minusDays(1);
 		String startTime = startTimeZdt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
 		
-		String datasets = "192,193,181";
+		String datasets = "192,193,181,188,191,202";
 		String pageSize = "3000";
 		String locale = "en";
 		
