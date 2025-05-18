@@ -41,12 +41,6 @@ const LeftComponent: React.FC<LeftComponentProps> = ({
       dataPointPointerName: 'Electricity Consumption',
     },
     {
-      id: 3,
-      label: `Total Forecasted Energy Consumption (Next 24 Hours): ${recentData?.estimatedConsumption24Hours ?? '---'} MWh`,
-      icon: ForecastIcon,
-      dataPointName: '',
-    },
-    {
       id: 4,
       label: `Wind Power Now: ${recentData?.latestWindPowerProduction ?? '---'} MW`,
       icon: WindPowerIcon,
@@ -109,12 +103,10 @@ const LeftComponent: React.FC<LeftComponentProps> = ({
                       hover:bg-blue-100 hover:shadow-lg hover:scale-[1.02] transition-all duration-200 ease-in-out
                       active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
-            {/* Icon */}
             <div className="mr-6">
               <img src={item.icon} alt={item.label} className="w-16 h-16" />
             </div>
 
-            {/* Text content */}
             <div className="flex flex-col justify-center flex-grow">
               <span className="text-2xl font-mono font-bold text-gray-800 p-6">
                 {item.label}
