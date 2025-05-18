@@ -19,11 +19,13 @@ interface LineChartComponentProps {
     label: string;
     color?: string;
   }[];
+  onPointClick?: (entry: DataPoint) => void;
 }
 
 const LineChartComponent: React.FC<LineChartComponentProps> = ({
   recentData,
   dataVariables,
+  onPointClick,
 }) => {
   const allValues = recentData.data.flatMap((d) =>
     dataVariables.map((v) => Number(d[v.key]))
@@ -35,11 +37,17 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({
   const adjustedMaxYValue = maxYValue + buffer;
 
   return (
-    <div className="h-3/5 w-full mt-4">
-      <ResponsiveContainer>
+    <div className="h-150 w-full mt-4">
+      <ResponsiveContainer width={'100%'} height="100%">
         <LineChart
           data={[...recentData.data].reverse()}
           margin={{ top: 20, right: 30, bottom: 80, left: 50 }}
+          onClick={(e) => {
+            if (e && e.activePayload && e.activePayload.length > 0) {
+              const dataPoint = e.activePayload[0].payload as DataPoint;
+              onPointClick?.(dataPoint);
+            }
+          }}
         >
           <CartesianGrid stroke="#ddd" strokeDasharray="5 5" />
           <XAxis
@@ -91,9 +99,19 @@ const LineChartComponent: React.FC<LineChartComponentProps> = ({
               key={variable.key as string}
               type="monotone"
               dataKey={variable.key}
-              stroke={variable.color || ['#8884d8', '#82ca9d', '#ff7300'][index % 3]}
+              stroke={
+                variable.color || ['#8884d8', '#82ca9d', '#ff7300'][index % 3]
+              }
               name={variable.label}
               dot={false}
+              activeDot={{
+                onClick: (e: any) => {
+                  if (onPointClick) {
+                    onPointClick(e.payload); // e.payload contains the whole DataPoint
+                  }
+                },
+                r: 6,
+              }}
             />
           ))}
         </LineChart>

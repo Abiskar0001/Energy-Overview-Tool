@@ -16,7 +16,17 @@ export interface DataPoint {
 }
 
 const ParentComponent = () => {
-  const [recentData, setRecentData] = useState<{ data: any[] }>({ data: [] });
+  const [recentData, setRecentData] = useState<{
+    latestElectricityConsumption: number;
+    latestElectricityProduction: number;
+    estimatedConsumption24Hours: number;
+    data: DataPoint[];
+  }>({
+    estimatedConsumption24Hours: 0,
+    latestElectricityConsumption: 0,
+    latestElectricityProduction: 0,
+    data: [],
+  });
   const [fetchTime, setFetchTime] = useState<string>(() =>
     new Date().toLocaleString('en-US', { timeZone: 'Europe/Helsinki' })
   );
@@ -42,7 +52,7 @@ const ParentComponent = () => {
 
     const intervalApiCaller = setInterval(() => {
       fetchData();
-    }, 60000);
+    }, 60000*3);
 
     return () => clearInterval(intervalApiCaller);
   }, []);
@@ -73,32 +83,33 @@ const ParentComponent = () => {
     {
       key: 'windPowerProduction' as keyof DataPoint,
       label: 'Wind Power Production',
-      color: '#82ca9d',
+      color: 'green',
     },
     {
       key: 'hydroProduction' as keyof DataPoint,
       label: 'Hydro Power Production',
-      color: '#3498db',
+      color: 'blue',
     },
     {
       key: 'nuclearPowerProduction' as keyof DataPoint,
       label: 'Nuclear Power Production',
-      color: '#f39c12',
+      color: 'purple',
     },
     {
       key: 'industrialCogeneration' as keyof DataPoint,
       label: 'Industrial Cogeneration',
-      color: '#27ae60',
+      color: 'orange',
     },
   ];
 
   const multipleVariables =
     selectedDataVariable === 'allProduction' ? productionVariables : undefined;
 
-    const handleReturnToHome = () => {
-      console.log('Returning to home');
-      setSelectedDataVariable('allProduction');
-      setSelectedDataVariablePointerName('Combined Production');}
+  const handleReturnToHome = () => {
+    console.log('Returning to home');
+    setSelectedDataVariable('allProduction');
+    setSelectedDataVariablePointerName('Combined Production');
+  };
 
   return (
     <div className="flex flex-col h-screen">
