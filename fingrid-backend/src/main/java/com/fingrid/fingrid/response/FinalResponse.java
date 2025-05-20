@@ -18,5 +18,5 @@ public class FinalResponse {
 	private Float latestIndustrialGeneration;
 	private List<FinalDataPoint> data;
 	private List<TimePricePair> nextDayPrices;
-	
+	private List<DataPointForecast> forecastData;
 }

@@ -17,11 +17,13 @@ export interface DataPoint {
 
 const ParentComponent = () => {
   const [recentData, setRecentData] = useState<{
+    nextDayPrices: { time: string; price: number }[];
     latestElectricityConsumption: number;
     latestElectricityProduction: number;
     estimatedConsumption24Hours: number;
     data: DataPoint[];
   }>({
+    nextDayPrices: [],
     estimatedConsumption24Hours: 0,
     latestElectricityConsumption: 0,
     latestElectricityProduction: 0,

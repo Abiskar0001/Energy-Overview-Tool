@@ -48,6 +48,7 @@ public class ApiService {
 		List<DataPointForecast> dataPoints = forecastResponse.getData();
 		dataPoints.sort(Comparator.comparing(DataPointForecast::getEndTime).reversed());
 		
+		
 		var sumOfData = dataPoints.stream()
 						.limit(96)
 						.map(DataPointForecast::getConsumptionForecast)
@@ -61,6 +62,8 @@ public class ApiService {
 						.sum();
 		
 		FinalResponse finalResponse = new FinalResponse();
+		dataPoints.sort(Comparator.comparing(DataPointForecast::getEndTime).reversed());
+		finalResponse.setForecastData(dataPoints);
 		
 		List<FinalDataPoint> finalDataPoints = new ArrayList<>();
 		
@@ -102,9 +105,14 @@ public class ApiService {
 		String entsoeStart = startTimeZdt.format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
 		String entsoeEnd = tomorrow.withHour(23).withMinute(59).withSecond(0).format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
 		
-		String entsoeJson = fetchEntsoeDataAsJson(entsoeStart, entsoeEnd);
-		List<TimePricePair> timePricePairs = parseEntsoePrices(entsoeJson);
-		finalResponse.setNextDayPrices(timePricePairs);
+		try {
+			String entsoeJson = fetchEntsoeDataAsJson(entsoeStart, entsoeEnd);
+			List<TimePricePair> timePricePairs = parseEntsoePrices(entsoeJson);
+			finalResponse.setNextDayPrices(timePricePairs);
+		} catch (Exception e) {
+			System.err.println("ENTSO-E data fetch or parse failed: " + e.getMessage());
+			finalResponse.setNextDayPrices(null);
+		}
 		
 		return finalResponse;
 	}
@@ -228,6 +236,7 @@ public class ApiService {
 						.accept(MediaType.APPLICATION_XML)
 						.retrieve()
 						.bodyToMono(String.class)
+						.timeout(Duration.ofSeconds(4))
 						.block();
 		
 		JSONObject jsonObject = XML.toJSONObject(xmlData);
