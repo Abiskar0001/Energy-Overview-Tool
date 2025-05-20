@@ -1,54 +1,73 @@
-# React + TypeScript + Vite
+# Electricity Analytics Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a full-stack web application that provides interactive electricity consumption and production analytics. It includes a React-based frontend and a Spring Boot backend.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- Interactive line charts and pie charts to visualize electricity consumption, production, and forecast data.
+- Display of current and forecasted electricity production with offset calculation.
+- Breakdown of energy sources by hour in a pie chart.
+- Next day electricity price chart.
+- Responsive design with animated highlights.
+- Backend API providing real-time and forecast data.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Technology Stack
+
+- **Frontend:** React, TypeScript, Recharts, npm
+- **Backend:** Spring Boot (Java), Gradle
+- **Data:** Real-time electricity consumption and production data, forecast data, next day electricity prices
+
+---
+
+## Prerequisites
+
+- Node.js (v14 or higher recommended)
+- Java Development Kit (JDK) 11 or higher
+- Gradle
+- Internet connection
+
+---
+
+## Getting Started
+
+### 1. Clone the Repository
+
+```
+git clone https://github.com/Abiskar0001/Energy-Overview-Tool.git
+cd Energy-Overview-Tool
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+### 2. Backend Setup (Spring Boot)
+Navigate to the backend directory & Open application.yml & enter your api key for fingrid and entso e platform respectively.
 ```
+cd fingrid-backend\src\main\resources
+code application.yml (Is VS Code is installed in the device)
+```
+Navigate back to fingrid-backend and run the server
+```
+cd ..\..\..
+./gradlew bootRun
+```
+
+### 3. Frontend Setup
+Navigate to Energy-Overview-Tool dir and run the frontend:
+```
+cd Energy-Overview-Tool
+```
+Install Dependencies and run the server
+```
+npm install
+npm run dev
+```
+Your website is operational at localhost at the given port.
+
+### Usage
+- Use the interactive charts to explore electricity data.
+- Click on chart points to view detailed energy source breakdown.
+- Reset selections with the provided buttons.
+- View forecast and next-day electricity price charts.
+
