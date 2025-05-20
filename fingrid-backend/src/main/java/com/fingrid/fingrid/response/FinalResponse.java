@@ -4,6 +4,7 @@ import lombok.Data;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Component
@@ -16,4 +17,6 @@ public class FinalResponse {
 	private Float latestNuclearPowerProduction;
 	private Float latestIndustrialGeneration;
 	private List<FinalDataPoint> data;
+	private List<TimePricePair> nextDayPrices;
+	
 }

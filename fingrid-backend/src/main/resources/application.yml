@@ -6,5 +6,5 @@ spring:
 fingrid:
   apiKey: 
   baseUrl: https://data.fingrid.fi
-
-
+entso:
+  securityToken:

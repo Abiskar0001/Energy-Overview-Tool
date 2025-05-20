@@ -11,6 +11,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import NextDayPricesChart from './analytics/NextDayPricesChartprops';
 
 interface RightComponentProps {
   onReturnToHome: () => void;
@@ -19,6 +20,7 @@ interface RightComponentProps {
     latestElectricityConsumption: number;
     latestElectricityProduction: number;
     data: DataPoint[];
+    nextDayPrices: { time: string; price: number }[];
   };
   dataVariable?: keyof DataPoint;
   dataVariablePointerName?: string;
@@ -85,11 +87,14 @@ const RightComponent: React.FC<RightComponentProps> = ({
           <div className="text-blue-500 text-4xl">⚡</div>
         </div>
       )}
+      {multipleVariables && recentData.nextDayPrices && (
+  <NextDayPricesChart nextDayPrices={recentData.nextDayPrices} />
+)}
 
       <div className="mt-6 bg-white rounded-xl shadow p-4">
         {multipleVariables && (
           <h2 className="text-xl text-gray-700 mt-2 font-mono">
-            Click on a point in the line chart to see detailed breakdown below.
+            Click any point to see energy source breakdown for that hour in the pie chart below↓
           </h2>
         )}
         <LineChartComponent
@@ -111,78 +116,113 @@ const RightComponent: React.FC<RightComponentProps> = ({
       </div>
 
       {multipleVariables && pieDataSource && (
-        <div className="w-full flex-1 min-h-[480px] mt-6 bg-white rounded-xl shadow p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl font-semibold text-gray-800">
-              Energy Source Breakdown
-            </h2>
-            <button
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 text-sm px-3 py-1 rounded"
-              onClick={resetToCurrent}
+  <div className="w-full flex-1 min-h-[480px] mt-6 bg-white rounded-xl shadow p-4 transition-all duration-300">
+    <div className="flex items-center justify-between mb-2">
+      <div>
+        <h2 className="text-2xl font-semibold text-gray-800">
+          Energy Source Breakdown
+        </h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Click any point on the price chart above to view hourly breakdown
+        </p>
+      </div>
+      <button
+        className="bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium text-sm px-3 py-1 rounded transition-colors flex items-center gap-1"
+        onClick={resetToCurrent}
+      >
+        Reset to Current
+      </button>
+    </div>
+
+    {/* Highlighted time section with animation */}
+    <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100 animate-pulse-once">
+      <p className="text-gray-600 text-center">
+        Showing data for:{' '}
+        <span className="font-mono font-bold text-blue-600">
+          {new Date(pieDataSource.endTime).toLocaleString([], {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </span>
+      </p>
+    </div>
+
+    <ResponsiveContainer width="100%" height={300}>
+      <PieChart>
+        <Tooltip 
+          formatter={(value, name) => [`${value} MWh`, name]} 
+          contentStyle={{ borderRadius: '8px' }}
+        />
+        <Legend 
+          layout="horizontal" 
+          verticalAlign="bottom" 
+          wrapperStyle={{ paddingTop: '20px' }}
+        />
+        {(() => {
+          const wind = pieDataSource.windPowerProduction;
+          const hydro = pieDataSource.hydroProduction;
+          const nuclear = pieDataSource.nuclearPowerProduction;
+          const cogeneration = pieDataSource.industrialCogeneration;
+
+          const totalKnown = wind + hydro + nuclear + cogeneration;
+          const totalConsumption = recentData.latestElectricityConsumption;
+          const others = Math.max(totalConsumption - totalKnown, 0);
+
+          const pieData = [
+            { name: 'Wind Power', value: wind },
+            { name: 'Hydro Power', value: hydro },
+            { name: 'Nuclear Power', value: nuclear },
+            { name: 'Industrial Cogeneration', value: cogeneration },
+            { name: 'Other Sources', value: others },
+          ];
+
+          const colors = [
+            '#4ade80',  // wind - green
+            '#60a5fa',  // hydro - blue
+            '#a78bfa',  // nuclear - purple
+            '#fb923c',  // cogeneration - orange
+            '#d1d5db',  // others - gray
+          ];
+
+          return (
+            <Pie
+              dataKey="value"
+              data={pieData}
+              cx="50%"
+              cy="50%"
+              outerRadius={80}
+              innerRadius={40}
+              paddingAngle={2}
+              label={({ name, percent }) => 
+                `${name} (${(percent * 100).toFixed(0)}%)`
+              }
+              labelLine={true}
+              animationDuration={500}
+              animationEasing="ease-out"
             >
-              Reset to Current
-            </button>
-          </div>
-          <p className="text-gray-600 mb-4">
-            Showing data from:{' '}
-            <span className="font-mono text-blue-800">
-              {new Date(pieDataSource.endTime).toLocaleString()}
-            </span>
-          </p>
+              {colors.map((color, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={color} 
+                  stroke="#fff"
+                  strokeWidth={1}
+                />
+              ))}
+            </Pie>
+          );
+        })()}
+      </PieChart>
+    </ResponsiveContainer>
 
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Tooltip />
-              <Legend />
-              {(() => {
-                const wind = pieDataSource.windPowerProduction;
-                const hydro = pieDataSource.hydroProduction;
-                const nuclear = pieDataSource.nuclearPowerProduction;
-                const cogeneration = pieDataSource.industrialCogeneration;
-
-                const totalKnown = wind + hydro + nuclear + cogeneration;
-                const totalConsumption =
-                  recentData.latestElectricityConsumption;
-                const others = Math.max(totalConsumption - totalKnown, 0);
-
-                const pieData = [
-                  { name: 'Wind', value: wind },
-                  { name: 'Hydro', value: hydro },
-                  { name: 'Nuclear', value: nuclear },
-                  { name: 'Cogeneration', value: cogeneration },
-                  { name: 'Others', value: others },
-                ];
-
-                const colors = [
-                  'green',
-                  'blue',
-                  'purple',
-                  'orange',
-                  '#d1d5db',
-                ];
-
-                return (
-                  <Pie
-                    dataKey="value"
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    labelLine={false}
-                    label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(0)}%`
-                    }
-                  >
-                    {colors.map((color, index) => (
-                      <Cell key={index} fill={color} />
-                    ))}
-                  </Pie>
-                );
-              })()}
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+    <div className="flex justify-center mt-2">
+      <div className="w-8 h-8 text-blue-500 opacity-70">
+      </div>
+    </div>
+  </div>
+)}
 
       {!multipleVariables && dataVariable && (
         <HighLowComponent recentData={recentData} dataVariable={dataVariable} />

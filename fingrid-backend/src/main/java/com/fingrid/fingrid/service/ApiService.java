@@ -3,17 +3,18 @@ package com.fingrid.fingrid.service;
 import com.fingrid.fingrid.response.*;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.XML;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -22,16 +23,13 @@ import java.util.*;
 public class ApiService {
 	@Value("${fingrid.apiKey}")
 	private String apiKey;
+	@Value("${entso.securityToken}")
+	private String securityToken;
 	
 	@Value("${fingrid.baseUrl}")
 	private String baseUrl;
 	
 	private final WebClient webClient;
-	
-	private final int ELECTRICITY_PRODUCTION_DATASET = 192;
-	private final int ELECTRICITY_CONSUMPTION_DATASET = 193;
-	private final int WIND_POWER_PRODUCTION_DATASET = 181;
-	private final int ENERGY_FORECAST_PRESENTATION = 165;
 	
 	@Cacheable("fingridData")
 	public FinalResponse fetchAndMapData() {
@@ -97,6 +95,16 @@ public class ApiService {
       finalResponse.setLatestNuclearPowerProduction(latest.getNuclearPowerProduction());
 			finalResponse.setEstimatedConsumption24Hours((float) sumOfData);
 		}
+		ZonedDateTime tomorrow = ZonedDateTime.now(ZoneId.of("Europe/Helsinki")).plusDays(2);
+		ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Europe/Helsinki"));
+		ZonedDateTime startTimeZdt = now.minusHours(12);
+		
+		String entsoeStart = startTimeZdt.format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
+		String entsoeEnd = tomorrow.withHour(23).withMinute(59).withSecond(0).format(DateTimeFormatter.ofPattern("yyyyMMddHHmm"));
+		
+		String entsoeJson = fetchEntsoeDataAsJson(entsoeStart, entsoeEnd);
+		List<TimePricePair> timePricePairs = parseEntsoePrices(entsoeJson);
+		finalResponse.setNextDayPrices(timePricePairs);
 		
 		return finalResponse;
 	}
@@ -200,8 +208,30 @@ public class ApiService {
 					throw new RuntimeException("Retry failed: " + retryException.getMessage(), retryException);
 				}
 			}
-			throw e;  // Re-throw the exception if it's not a 429
+			throw e;
 		}
+	}
+	
+	public String fetchEntsoeDataAsJson(String start, String end) {
+		String uri = UriComponentsBuilder.fromHttpUrl("https://web-api.tp.entsoe.eu/api")
+						.queryParam("securityToken", securityToken)
+						.queryParam("documentType", "A44")  // Day-ahead prices
+						.queryParam("in_Domain", "10YFI-1--------U")  // Finland
+						.queryParam("out_Domain", "10YFI-1--------U")
+						.queryParam("periodStart", start)  // Format: yyyyMMddHHmm
+						.queryParam("periodEnd", end)
+						.build()
+						.toUriString();
+		
+		String xmlData = webClient.get()
+						.uri(uri)
+						.accept(MediaType.APPLICATION_XML)
+						.retrieve()
+						.bodyToMono(String.class)
+						.block();
+		
+		JSONObject jsonObject = XML.toJSONObject(xmlData);
+		return jsonObject.toString(2);  // Pretty-printed JSON
 	}
 	
 	public static ZonedDateTime roundToNearestQuarterHour(ZonedDateTime dt) {
@@ -227,4 +257,95 @@ public class ApiService {
 		
 		return rounded;
 	}
+	
+	private List<TimePricePair> parseEntsoePrices(String json) {
+		List<TimePricePair> timePricePairs = new ArrayList<>();
+		JSONObject jsonObject = new JSONObject(json);
+		
+		try {
+			JSONObject marketDocument = jsonObject.getJSONObject("Publication_MarketDocument");
+			Object timeSeries = marketDocument.get("TimeSeries");
+			
+			if (timeSeries instanceof JSONArray) {
+				JSONArray timeSeriesArray = (JSONArray) timeSeries;
+				for (int i = 0; i < timeSeriesArray.length(); i++) {
+					processTimeSeries(timeSeriesArray.getJSONObject(i), timePricePairs);
+				}
+			} else if (timeSeries instanceof JSONObject) {
+				processTimeSeries((JSONObject) timeSeries, timePricePairs);
+			}
+		} catch (Exception e) {
+			System.err.println("Error parsing ENTSO-E response. JSON was: " + json);
+			e.printStackTrace();
+		}
+		return timePricePairs;
+	}
+	
+	private void processTimeSeries(JSONObject timeSeries, List<TimePricePair> timePricePairs) {
+		try {
+			JSONObject period = timeSeries.getJSONObject("Period");
+			
+			// Try different possible time interval field names
+			String startTime = tryGetTime(period,
+																		"timeInterval.start",
+																		"start",
+																		"start_DateAndTime",
+																		"period.timeInterval.start"
+			);
+			
+			if (startTime == null) {
+				System.err.println("Could not find start time in period: " + period);
+				return;
+			}
+			
+			JSONArray points = period.getJSONArray("Point");
+			DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+			
+			ZonedDateTime baseTime;
+			try {
+				baseTime = ZonedDateTime.parse(startTime, formatter);
+			} catch (Exception e) {
+				// Fallback to local date time if timezone parsing fails
+				LocalDateTime localDateTime = LocalDateTime.parse(startTime, formatter);
+				baseTime = localDateTime.atZone(ZoneId.of("Europe/Helsinki"));
+			}
+			
+			for (int j = 0; j < points.length(); j++) {
+				JSONObject point = points.getJSONObject(j);
+				int position = point.getInt("position");
+				double price = point.getDouble("price.amount");
+				
+				ZonedDateTime pointTime = baseTime.plusHours(position - 1);
+				
+				String formattedTime = pointTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+				
+				//€/MWh
+				timePricePairs.add(new TimePricePair(formattedTime, price));
+			}
+		} catch (Exception e) {
+			System.err.println("Error processing time series: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	private String tryGetTime(JSONObject period, String... possibleFieldNames) {
+		for (String fieldName : possibleFieldNames) {
+			try {
+				// Try to navigate through nested objects if field contains dots
+				String[] path = fieldName.split("\\.");
+				JSONObject current = period;
+				
+				for (int i = 0; i < path.length - 1; i++) {
+					current = current.getJSONObject(path[i]);
+				}
+				
+				return current.getString(path[path.length - 1]);
+			} catch (Exception e) {
+				// Field not found, try next one
+				continue;
+			}
+		}
+		return null;
+	}
+	
 }
