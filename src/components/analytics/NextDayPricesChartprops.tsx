@@ -14,10 +14,14 @@ interface NextDayPricesChartProps {
 }
 
 const NextDayPricesChart: React.FC<NextDayPricesChartProps> = ({ nextDayPrices }) => {
-  const formattedData = nextDayPrices.map(({ time, price }) => ({
-    time,
+  const formattedData = nextDayPrices.map(({ time, price }) => {
+  const originalDate = new Date(time);
+  const adjustedDate = new Date(originalDate.getTime() + 24 * 60 * 60 * 1000);
+  return {
+    time: adjustedDate.toISOString(),
     price,
-  }));
+  };
+});
 
   return (
     <div className="mt-6 bg-white rounded-xl shadow p-4">
