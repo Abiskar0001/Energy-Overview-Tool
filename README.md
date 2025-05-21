@@ -71,3 +71,6 @@ Your website is operational at localhost at the given port.
 - Reset selections with the provided buttons.
 - View forecast and next-day electricity price charts.
 
+### API Key Generation Links
+- https://developer-data.fingrid.fi/apis
+- https://transparency.entsoe.eu/ 
