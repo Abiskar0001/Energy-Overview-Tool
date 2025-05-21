@@ -26,7 +26,7 @@ const NextDayPricesChart: React.FC<NextDayPricesChartProps> = ({ nextDayPrices }
   return (
     <div className="mt-6 bg-white rounded-xl shadow p-4">
       <h2 className="text-xl font-semibold text-gray-800 font-mono mb-4">
-        Next 24 Hours Electricity Price Forecast (€/MWh)
+        Electricity Price Forecast (€/MWh)
       </h2>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={formattedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>

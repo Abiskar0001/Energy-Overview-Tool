@@ -98,7 +98,7 @@ public class ApiService {
       finalResponse.setLatestNuclearPowerProduction(latest.getNuclearPowerProduction());
 			finalResponse.setEstimatedConsumption24Hours((float) sumOfData);
 		}
-		ZonedDateTime tomorrow = ZonedDateTime.now(ZoneId.of("Europe/Helsinki")).plusDays(2);
+		ZonedDateTime tomorrow = ZonedDateTime.now(ZoneId.of("Europe/Helsinki")).plusDays(3);
 		ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Europe/Helsinki"));
 		ZonedDateTime startTimeZdt = now.minusHours(12);
 		
